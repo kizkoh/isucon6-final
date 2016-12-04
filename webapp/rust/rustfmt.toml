@@ -1,0 +1,6 @@
+fn_return_indent = "WithWhereClause"
+reorder_imports = true
+take_source_hints = false
+format_strings = false
+
+max_width = 120
