@@ -232,7 +232,7 @@ fn main() {
     let custom_handler: fn(&mut NickelError<()>, &mut Request<()>) -> Action = custom_handler;
     server.handle_error(custom_handler);
 
-    match server.listen("0.0.0.0:8080") {
+    match server.listen("0.0.0.0:8888") {
         Ok(_) => (),
         Err(e) => {
             println!("{}", e);
