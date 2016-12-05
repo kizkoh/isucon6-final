@@ -24,6 +24,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate uuid;
 
 // {Middleware, Action, StaticFilesHandler, FormBody};
 
@@ -47,6 +48,8 @@ use std::mem;
 use std::process::exit;
 use std::str::FromStr;
 use std::sync::Arc;
+
+use uuid::{Uuid, UuidVersion};
 
 // #[derive(Debug, Serialize, Deserialize)]
 // struct Token {
@@ -273,10 +276,19 @@ fn output_error<'mw, T: AsRef<str> + ?Sized>(mut res: Response<'mw>, msg: &T) ->
 }
 
 fn post_api_csrf_token<'mw>(_req: &mut Request, mut res: Response<'mw>) -> MiddlewareResult<'mw> {
-    let mut query = "INSERT INTO `tokens` (`csrf_token`) VALUES".to_string();
-    query = query + &"(SHA2(CONCAT(RAND(), UUID_SHORT()), 256))".to_string();
+    let uuid = match Uuid::new(UuidVersion::Random) {
+        Some(uuid) => uuid,
+        None => {
+            let _ = writeln!(&mut std::io::stderr(), "{}", "uuid is none");
+            exit(1);
+        }
+    };
 
-    let last_insert_id = match DBX.prep_exec(query.clone(), ()) {
+    println!("post_api_csrf_token()");
+    let mut query = "INSERT INTO `tokens` (`csrf_token`) VALUES".to_string();
+    query = query + &"(SHA2(:uuid, 256))".to_string();
+
+    let last_insert_id = match DBX.prep_exec(query.clone(), (params!{"uuid" => uuid.as_bytes()})) {
         Ok(row) => row.last_insert_id(),
         Err(e) => return output_error(res, e.description()),
     };
